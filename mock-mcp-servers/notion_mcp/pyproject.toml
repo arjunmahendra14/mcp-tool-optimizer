@@ -1,0 +1,11 @@
+[project]
+name = "mock-notion-mcp"
+version = "0.1.0"
+dependencies = ["fastmcp"]
+
+[project.scripts]
+notion_mcp = "notion_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

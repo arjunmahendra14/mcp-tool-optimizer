@@ -1,0 +1,11 @@
+[project]
+name = "mock-linear-mcp"
+version = "0.1.0"
+dependencies = ["fastmcp"]
+
+[project.scripts]
+linear_mcp = "linear_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

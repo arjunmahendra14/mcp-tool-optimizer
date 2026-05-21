@@ -1,0 +1,11 @@
+[project]
+name = "mock-slack-mcp"
+version = "0.1.0"
+dependencies = ["fastmcp"]
+
+[project.scripts]
+slack_mcp = "slack_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

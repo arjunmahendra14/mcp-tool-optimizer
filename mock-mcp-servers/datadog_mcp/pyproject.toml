@@ -1,0 +1,11 @@
+[project]
+name = "mock-datadog-mcp"
+version = "0.1.0"
+dependencies = ["fastmcp"]
+
+[project.scripts]
+datadog_mcp = "datadog_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -1,0 +1,11 @@
+[project]
+name = "mock-github-mcp"
+version = "0.1.0"
+dependencies = ["fastmcp"]
+
+[project.scripts]
+github_mcp = "github_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

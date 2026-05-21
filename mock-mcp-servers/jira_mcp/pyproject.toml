@@ -1,0 +1,11 @@
+[project]
+name = "mock-jira-mcp"
+version = "0.1.0"
+dependencies = ["fastmcp"]
+
+[project.scripts]
+jira_mcp = "jira_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

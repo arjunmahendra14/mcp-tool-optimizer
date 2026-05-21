@@ -1,0 +1,11 @@
+[project]
+name = "mock-pagerduty-mcp"
+version = "0.1.0"
+dependencies = ["fastmcp"]
+
+[project.scripts]
+pagerduty_mcp = "pagerduty_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
