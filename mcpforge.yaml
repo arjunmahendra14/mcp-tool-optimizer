@@ -1,0 +1,40 @@
+servers:
+  - name: datadog-mcp
+    url: http://localhost:9001/sse
+  - name: slack-mcp
+    url: http://localhost:9002/sse
+  - name: kubernetes-mcp
+    url: http://localhost:9003/sse
+  - name: pagerduty-mcp
+    url: http://localhost:9004/sse
+  - name: github-mcp
+    url: http://localhost:9005/sse
+  - name: sentry-mcp
+    url: http://localhost:9006/sse
+  - name: confluence-mcp
+    url: http://localhost:9007/sse
+  - name: jira-mcp
+    url: http://localhost:9008/sse
+  - name: linear-mcp
+    url: http://localhost:9009/sse
+  - name: notion-mcp
+    url: http://localhost:9010/sse
+  - name: cloudflare-api
+    command: npx
+    args: ["mcp-remote", "https://mcp.cloudflare.com/mcp"]
+
+proxy:
+  host: 0.0.0.0
+  port: 8765
+
+optimizer:
+  interval_minutes: 1
+  default_threshold: 3.0
+  thresholds:
+    incident: 1.5
+    planning: 5.0
+    code: 3.0
+    general: 3.0
+
+database:
+  path: mcpforge.db

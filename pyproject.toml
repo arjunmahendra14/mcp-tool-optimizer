@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mcpforge"
+version = "0.1.0"
+description = "A platform-agnostic MCP proxy that keeps your agent's tool pool lean and smart"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [
+    { name = "Arjun Mahendra" },
+]
+keywords = ["mcp", "agent", "tools", "proxy", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "mcp>=1.0.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "apscheduler>=3.10.0",
+    "click>=8.1.0",
+    "httpx>=0.27.0",
+    "pyyaml>=6.0",
+    "anthropic>=0.50.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/arjunmahendra1/mcp-tool-optimizer"
+Repository = "https://github.com/arjunmahendra1/mcp-tool-optimizer"
+Issues = "https://github.com/arjunmahendra1/mcp-tool-optimizer/issues"
+
+[project.scripts]
+mcpforge = "mcpforge.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["mcpforge"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"dashboard/dist" = "share/mcpforge/dashboard"

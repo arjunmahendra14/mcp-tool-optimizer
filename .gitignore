@@ -1,0 +1,33 @@
+# environment
+.env
+.venv/
+venv/
+
+# python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# build / dist
+dist/
+build/
+*.egg-info/
+*.whl
+*.tar.gz
+
+# database
+*.db
+*.sqlite
+*.sqlite3
+
+# dashboard
+dashboard/node_modules/
+dashboard/dist/
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
