@@ -58,7 +58,7 @@ export default function App() {
         fetchScores(),
         fetchPool(),
         fetchAudit(),
-        fetch('http://localhost:8765/api/health').then(r => r.json()),
+        fetch('/api/health').then(r => r.json()),
       ])
       setScores(s)
       setPool(p)

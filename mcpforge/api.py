@@ -1,8 +1,10 @@
 import json
 import logging
+import pathlib
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import store
@@ -91,3 +93,8 @@ async def rollback(req: RollbackRequest):
 
     logger.info(f"Rolled back pool to audit entry {req.run_id} ({len(changes)} changes)")
     return {"rolled_back_to": req.run_id, "pool_size": len(snapshot), "changes": len(changes)}
+
+
+_DIST = pathlib.Path(__file__).parent.parent / "dashboard" / "dist"
+if _DIST.is_dir():
+    api.mount("/", StaticFiles(directory=str(_DIST), html=True), name="dashboard")
