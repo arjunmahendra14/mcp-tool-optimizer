@@ -95,6 +95,16 @@ async def rollback(req: RollbackRequest):
     return {"rolled_back_to": req.run_id, "pool_size": len(snapshot), "changes": len(changes)}
 
 
-_DIST = pathlib.Path(__file__).parent.parent / "dashboard" / "dist"
-if _DIST.is_dir():
+def _find_dist() -> pathlib.Path | None:
+    candidates = [
+        pathlib.Path(__file__).parent.parent / "dashboard" / "dist",  # editable install / local
+        pathlib.Path("/app/dashboard/dist"),                           # Docker container
+    ]
+    for p in candidates:
+        if p.is_dir():
+            return p
+    return None
+
+_DIST = _find_dist()
+if _DIST:
     api.mount("/", StaticFiles(directory=str(_DIST), html=True), name="dashboard")

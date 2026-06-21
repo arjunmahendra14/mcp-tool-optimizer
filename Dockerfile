@@ -15,20 +15,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy source needed for install
+# Install Python deps first (layer cache)
 COPY pyproject.toml README.md ./
-COPY mcpforge/ mcpforge/
-
-# Install package (regular install, not editable) and fastmcp
-RUN pip install --no-cache-dir ".[voyage]" && \
+RUN pip install --no-cache-dir -e ".[voyage]" && \
     pip install --no-cache-dir fastmcp
 
-# Copy remaining application files
+# Copy application code
+COPY mcpforge/ mcpforge/
 COPY mock-mcp-servers/ mock-mcp-servers/
 COPY mcpforge.cloud.yaml mcpforge.yaml
 
-# Copy built dashboard from stage 1
-COPY --from=dashboard-builder /dashboard/dist dashboard/dist
+# Copy built dashboard from stage 1 — lands at /app/dashboard/dist
+COPY --from=dashboard-builder /dashboard/dist /app/dashboard/dist
 
 # Copy startup helpers
 COPY run_sse.py .
