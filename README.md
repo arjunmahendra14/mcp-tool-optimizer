@@ -23,6 +23,9 @@ Connecting multiple MCP servers dumps every tool schema into the model's context
 | Learns from usage | ✓ | ✗ | ✗ | ✗ |
 | Session-type awareness | ✓ | ✗ | ✗ | ✗ |
 | Latency-aware scoring | ✓ | ✗ | ✗ | ✗ |
+| Semantic tool retrieval | ✓ | ✗ | ✗ | ✗ |
+| Token budget enforcement | ✓ | ✗ | ✗ | ✗ |
+| Connection pooling | ✓ | ✗ | ✗ | ✗ |
 | Auto-updates over time | ✓ | ✗ | ✗ | ✗ |
 | Platform agnostic | ✓ | ✓ | ✓ | ✓ |
 
@@ -33,6 +36,9 @@ Connecting multiple MCP servers dumps every tool schema into the model's context
 - MCPForge proxies all tool calls between your agent and your MCP servers — your agent connects to MCPForge instead of directly to servers, zero other changes needed.
 - Every tool call is logged. The optimizer scores each tool by call frequency, recency, and latency — tools that never get called get pruned from the pool automatically.
 - Session type is detected from your opening message (incident / planning / code / general) and the active tool pool adjusts accordingly — an incident session keeps ops tools, a planning session keeps project tools.
+- Semantic retrieval ranks tools by relevance to the current query using Voyage AI embeddings, sentence-transformers, or a TF-IDF fallback — no API key required for the fallback.
+- A token budget cap ensures the active tool pool never exceeds a set schema token limit, even during cold start.
+- A connection pool manages concurrent MCP sessions with configurable size and timeout, so parallel agent requests don't starve each other.
 
 ---
 
@@ -79,10 +85,14 @@ servers:
 proxy:
   host: 0.0.0.0
   port: 8765            # your agent connects to http://localhost:8765/sse
+  pool_size: 4          # max concurrent MCP sessions per server
+  queue_wait_timeout: 5.0   # seconds to wait for a pool slot before rejecting
+  pool_wait_timeout: 30.0   # seconds to wait for a session to become ready
 
 optimizer:
   interval_minutes: 15  # how often to re-score and update the tool pool
   default_threshold: 10.0  # tools below this score get pruned
+  token_budget: 8000    # max schema tokens in the active pool at any time
 
   # Per-session-type thresholds — higher means stricter (fewer tools shown)
   thresholds:
@@ -100,6 +110,8 @@ An `ANTHROPIC_API_KEY` is required for session classification. Put it in a `.env
 ```
 ANTHROPIC_API_KEY=sk-ant-...
 ```
+
+Optionally set `VOYAGE_API_KEY` to enable Voyage AI embeddings for semantic tool retrieval. If not set, MCPForge falls back to sentence-transformers or TF-IDF automatically.
 
 ---
 
@@ -127,6 +139,74 @@ latency_penalty = log(p99_ms + 1)
 ```
 
 In plain terms: tools called recently and frequently score highest. Slow tools score lower. Tools that have never been called score 0 and get pruned. Session type adjusts the pruning threshold — high-stakes sessions like incident keep more tools active, planning sessions apply a stricter cutoff.
+
+The optimizer also enforces a `token_budget` — if the scored pool would exceed the budget, lowest-scoring tools are dropped until it fits.
+
+---
+
+## Semantic retrieval
+
+MCPForge ranks candidate tools by semantic similarity to the current agent query before scoring. Backend priority:
+
+1. **Voyage AI** — best quality, requires `VOYAGE_API_KEY` and `pip install voyageai`
+2. **sentence-transformers** — local model (`all-MiniLM-L6-v2`, ~80MB), no API key needed
+3. **TF-IDF** — keyword fallback, always available, zero dependencies
+
+The active backend is selected automatically at startup based on what's available.
+
+---
+
+## Deployment
+
+### Docker
+
+```bash
+docker build -t mcpforge .
+docker run -p 8765:8765 \
+  -e ANTHROPIC_API_KEY=sk-ant-... \
+  -v $(pwd)/data:/data \
+  mcpforge
+```
+
+The Dockerfile starts 10 built-in mock MCP servers (Datadog, Slack, Kubernetes, PagerDuty, GitHub, Sentry, Confluence, Jira, Linear, Notion) alongside the proxy — useful for demos and load testing without real server connections.
+
+### Railway
+
+A `railway.toml` is included. Set `ANTHROPIC_API_KEY` in Railway environment variables, then deploy:
+
+```bash
+railway up
+```
+
+The proxy will be available at your Railway-assigned URL on port 8765. The SQLite database is written to `/data/mcpforge.db` — mount a Railway volume at `/data` to persist it across deploys.
+
+---
+
+## Testing
+
+### Full test suite
+
+```bash
+python test_all.py
+```
+
+Covers: pool timeout and filtering, optimizer end-to-end (budget knapsack + reserve promotion), pool exhaustion, load throughput regression, cold start, and unreachable server handling.
+
+### Load test
+
+```bash
+python load_test.py --sessions 20 --calls 10
+```
+
+Fires N concurrent sessions against the proxy, each making M tool calls with a skewed hot/cold distribution. Reports throughput, latency percentiles, error rate, and DB integrity.
+
+### Pool comparison
+
+```bash
+python compare_pools.py
+```
+
+Runs the same agent task against the full 40-tool pool and the optimized 8-tool pool side-by-side. Reports schema tokens loaded, tool calls made, first-call accuracy, and total API tokens consumed.
 
 ---
 
