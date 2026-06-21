@@ -1,4 +1,13 @@
+# mcpforge.yaml — MCPForge configuration
+#
+# The only required section is `servers`. Everything else has sensible defaults,
+# so you can start with just a list of server URLs and MCPForge will handle the rest.
+
 servers:
+  # Add one entry per MCP server you want MCPForge to proxy.
+  # MCPForge connects to all of them on startup and aggregates their tools.
+
+  # For servers that expose an SSE endpoint, use `url`:
   - name: datadog-mcp
     url: http://localhost:9001/sse
   - name: slack-mcp
@@ -19,22 +28,37 @@ servers:
     url: http://localhost:9009/sse
   - name: notion-mcp
     url: http://localhost:9010/sse
+
+  # For servers that run as a local subprocess (e.g. via mcp-remote for hosted MCP servers),
+  # use `command` and `args` instead of `url`:
   - name: cloudflare-api
     command: npx
     args: ["mcp-remote", "https://mcp.cloudflare.com/mcp"]
 
 proxy:
   host: 0.0.0.0
-  port: 8765
+  port: 8765  # your agent connects to http://localhost:8765/sse
 
 optimizer:
+  # How often (in minutes) the optimizer re-scores tools and updates the active pool.
+  # Shorter intervals respond faster to usage changes; longer intervals are less noisy.
   interval_minutes: 1
+
+  # The global minimum score for a tool to remain active. Tools below this are pruned
+  # from the tools/list response until their score rises again.
   default_threshold: 3.0
+
+  # Per-session-type thresholds. MCPForge classifies each session from the opening
+  # message and applies the matching threshold. Higher = stricter (fewer tools shown).
+  # Incident sessions get a lower threshold (more tools) because coverage matters more
+  # than brevity during active incidents.
   thresholds:
-    incident: 1.5
-    planning: 5.0
+    incident: 1.5   # keep more tools — you may need anything during an incident
+    planning: 5.0   # keep fewer tools — planning sessions have predictable needs
     code: 3.0
     general: 3.0
 
 database:
+  # Path to the SQLite database where tool calls and optimizer history are stored.
+  # Created automatically on first run. Back this up if you want to preserve scoring history.
   path: mcpforge.db

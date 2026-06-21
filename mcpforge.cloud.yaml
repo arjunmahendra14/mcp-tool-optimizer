@@ -1,0 +1,41 @@
+servers:
+  - name: datadog-mcp
+    url: http://localhost:9001/sse
+  - name: slack-mcp
+    url: http://localhost:9002/sse
+  - name: kubernetes-mcp
+    url: http://localhost:9003/sse
+  - name: pagerduty-mcp
+    url: http://localhost:9004/sse
+  - name: github-mcp
+    url: http://localhost:9005/sse
+  - name: sentry-mcp
+    url: http://localhost:9006/sse
+  - name: confluence-mcp
+    url: http://localhost:9007/sse
+  - name: jira-mcp
+    url: http://localhost:9008/sse
+  - name: linear-mcp
+    url: http://localhost:9009/sse
+  - name: notion-mcp
+    url: http://localhost:9010/sse
+
+proxy:
+  host: 0.0.0.0
+  port: 8765
+  pool_size: 4
+  queue_wait_timeout: 5.0
+  pool_wait_timeout: 30.0
+
+optimizer:
+  interval_minutes: 5
+  default_threshold: 3.0
+  thresholds:
+    incident: 1.5
+    planning: 5.0
+    code: 3.0
+    general: 3.0
+  token_budget: 8000
+
+database:
+  path: /data/mcpforge.db

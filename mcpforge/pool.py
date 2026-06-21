@@ -8,22 +8,36 @@ logger = logging.getLogger(__name__)
 
 
 class SessionPool:
-    """Active tool pool scoped to a single MCP session."""
+    """Active tool pool scoped to a single MCP session.
 
-    def __init__(self, active: set[tuple[str, str]], cold_start: bool = False) -> None:
+    Tools visible to this session = global active pool + semantic boost.
+    Semantic boost promotes reserve tools that are relevant to this session's
+    task — they're surfaced without changing the global pool.
+    """
+
+    def __init__(
+        self,
+        active: set[tuple[str, str]],
+        semantic_boost: set[tuple[str, str]] | None = None,
+        cold_start: bool = False,
+    ) -> None:
         self._active = active
+        self._semantic_boost = semantic_boost or set()
         self._cold_start = cold_start
 
     def is_active(self, server: str, tool: str) -> bool:
-        """Return True if this (server, tool) pair is active in this session's pool."""
         if self._cold_start:
             return True
-        return (server, tool) in self._active
+        return (server, tool) in self._active or (server, tool) in self._semantic_boost
 
     @property
     def size(self) -> int:
-        """Number of active tools in this session pool."""
-        return len(self._active)
+        return len(self._active | self._semantic_boost)
+
+    @property
+    def boosted(self) -> set[tuple[str, str]]:
+        """Reserve tools promoted into this session by semantic relevance."""
+        return self._semantic_boost - self._active
 
 
 class ToolPool:
@@ -51,12 +65,28 @@ class ToolPool:
         return (server, tool) in self._active
 
     def update(self, scored_tools: list[dict]) -> None:
-        """Replace the global pool with optimizer results."""
-        self._active = {
+        """Replace the global pool with optimizer results.
+
+        Guard: if the optimizer produces zero active tools (over-aggressive pruning
+        with sparse data), keep all non-excluded tools active rather than silently
+        blocking every tools/list response.
+        """
+        active = {
             (t["server"], t["tool"])
             for t in scored_tools
             if t["status"] == "active"
         }
+        if not active and scored_tools:
+            # Fall back to all non-excluded tools so the proxy stays functional
+            active = {
+                (t["server"], t["tool"])
+                for t in scored_tools
+                if t["status"] != "excluded"
+            }
+            logger.warning(
+                f"Optimizer produced 0 active tools — keeping {len(active)} reserve tools visible"
+            )
+        self._active = active
         self._cold_start = False
         logger.info(f"Pool updated: {len(self._active)} active tools")
 
@@ -67,9 +97,11 @@ class ToolPool:
         thresholds: dict[str, float],
         default_threshold: float,
     ) -> SessionPool:
-        """Build a session-scoped pool applying the type-specific prune threshold.
+        """Build a session-scoped pool from the global active set.
 
-        In cold-start mode, all tools are active regardless of threshold.
+        The global pool already reflects AI decisions (active/reserve/excluded).
+        Session-type thresholds act as a secondary filter within the active set
+        only — they cannot promote reserve or excluded tools.
         """
         if self._cold_start:
             return SessionPool(set(), cold_start=True)
@@ -78,8 +110,11 @@ class ToolPool:
         active = {
             (row["server"], row["tool"])
             for row in scored_rows
-            if row["score"] >= threshold
+            if row["status"] == "active" and row["score"] >= threshold
         }
+        # If threshold filtering leaves nothing, fall back to all active tools
+        if not active:
+            active = self._active.copy()
         logger.debug(
             f"SessionPool [{session_type}] threshold={threshold}: {len(active)} active tools"
         )

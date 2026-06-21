@@ -1,0 +1,19 @@
+servers:
+  - name: filesystem
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "/Users/arjunmahendra"]
+  - name: github
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: "${GITHUB_TOKEN}"
+
+proxy:
+  port: 8765
+
+optimizer:
+  interval_minutes: 1
+  default_threshold: 1.0
+
+database:
+  path: mcpforge.real.db

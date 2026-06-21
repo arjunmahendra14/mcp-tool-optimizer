@@ -22,6 +22,7 @@ class ServerConfig:
     headers: dict[str, str] = field(default_factory=dict)
     command: str | None = None
     args: list[str] = field(default_factory=list)
+    env: dict[str, str] = field(default_factory=dict)
 
     @property
     def is_stdio(self) -> bool:
@@ -32,12 +33,17 @@ class ServerConfig:
 class ProxyConfig:
     host: str = "0.0.0.0"
     port: int = 8765
+    pool_size: int = 4
+    queue_wait_timeout: float = 5.0
+    pool_wait_timeout: float = 30.0
+    health_check_interval: float = 60.0
 
 
 @dataclass
 class OptimizerConfig:
     interval_minutes: int = 15
     default_threshold: float = 10.0
+    token_budget: int = 8000
     thresholds: dict[str, float] = field(default_factory=lambda: {
         "incident": 5.0,
         "planning": 15.0,
@@ -73,7 +79,8 @@ def load_config(path: str = "mcpforge.yaml") -> Config:
     for s in raw_servers:
         s = dict(s)
         headers = {k: _expand_env(v) for k, v in s.pop("headers", {}).items()}
-        servers.append(ServerConfig(**s, headers=headers))
+        env = {k: _expand_env(v) for k, v in s.pop("env", {}).items()}
+        servers.append(ServerConfig(**s, headers=headers, env=env))
     proxy_data = data.get("proxy", {})
 
     # Thresholds is a nested dict — extract before passing to dataclass

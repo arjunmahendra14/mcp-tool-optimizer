@@ -48,8 +48,8 @@ async def scores():
 async def get_pool():
     rows = store.get_tool_pool()
     active = [{"server": r["server"], "tool": r["tool"]} for r in rows if r["status"] == "active"]
-    pruned = [{"server": r["server"], "tool": r["tool"]} for r in rows if r["status"] == "pruned"]
-    return {"active": active, "pruned": pruned}
+    reserve = [{"server": r["server"], "tool": r["tool"]} for r in rows if r["status"] == "reserve"]
+    return {"active": active, "reserve": reserve}
 
 
 @api.get("/api/audit")
