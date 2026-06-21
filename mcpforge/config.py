@@ -81,7 +81,9 @@ def load_config(path: str = "mcpforge.yaml") -> Config:
         headers = {k: _expand_env(v) for k, v in s.pop("headers", {}).items()}
         env = {k: _expand_env(v) for k, v in s.pop("env", {}).items()}
         servers.append(ServerConfig(**s, headers=headers, env=env))
-    proxy_data = data.get("proxy", {})
+    proxy_data = dict(data.get("proxy", {}))
+    if "port" in proxy_data and isinstance(proxy_data["port"], str):
+        proxy_data["port"] = int(_expand_env(proxy_data["port"]))
 
     # Thresholds is a nested dict — extract before passing to dataclass
     optimizer_raw = dict(data.get("optimizer", {}))

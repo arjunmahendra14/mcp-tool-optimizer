@@ -22,7 +22,7 @@ servers:
 
 proxy:
   host: 0.0.0.0
-  port: 8765
+  port: "${PORT}"
   pool_size: 4
   queue_wait_timeout: 5.0
   pool_wait_timeout: 30.0

@@ -7,13 +7,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python deps first (layer cache)
+# Copy source needed for install
 COPY pyproject.toml README.md ./
-RUN pip install --no-cache-dir -e ".[voyage]" && \
+COPY mcpforge/ mcpforge/
+
+# Install package (regular install, not editable) and fastmcp
+RUN pip install --no-cache-dir ".[voyage]" && \
     pip install --no-cache-dir fastmcp
 
-# Copy application code
-COPY mcpforge/ mcpforge/
+# Copy remaining application files
 COPY mock-mcp-servers/ mock-mcp-servers/
 COPY mcpforge.cloud.yaml mcpforge.yaml
 
