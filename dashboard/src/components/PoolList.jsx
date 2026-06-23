@@ -64,12 +64,12 @@ export default function PoolList({ pool }) {
         </div>
         <div>
           <div style={colHeadStyle}>
-            Pruned <span style={badgeStyle(false)}>{pool.pruned.length}</span>
+            Reserve <span style={badgeStyle(false)}>{pool.reserve.length}</span>
           </div>
-          {pool.pruned.length === 0 && (
+          {pool.reserve.length === 0 && (
             <p style={{ color: 'var(--muted)', fontSize: '12px' }}>No pruned tools</p>
           )}
-          {pool.pruned.map((t, i) => (
+          {pool.reserve.map((t, i) => (
             <div key={i} style={{ ...toolRowStyle, opacity: 0.55 }}>
               <span>{t.tool}</span>
               <span style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>{t.server}</span>
